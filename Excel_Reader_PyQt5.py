@@ -76,9 +76,19 @@ class ExcelApp(QMainWindow):
             "background-color: #e74c3c; color: #ecf0f1; padding: 10px; border: none; border-radius: 5px;")
         self.layout.addWidget(self.button, 5, 0, 1, 3)
 
-        container = QWidget()
-        container.setLayout(self.layout)
-        self.setCentralWidget(container)
+        self.save_label = QLabel("Select The Format(Save Mode Only):")
+        self.save_label.setFont(QFont('Arial', 12))
+        self.save_label.setStyleSheet("color: #ecf0f1;")
+        self.layout.addWidget(self.save_label, 6, 0)
+
+        self.save_input = QComboBox()
+        self.save_input.addItems(["pdf", "jpeg", "png"])
+        self.save_input.setStyleSheet("background-color: #34495e; color: #ecf0f1; padding: 5px; border-radius: 5px;")
+        self.layout.addWidget(self.save_input, 6, 1)
+
+        containe = QWidget()
+        containe.setLayout(self.layout)
+        self.setCentralWidget(containe)
 
         self.setStyleSheet("""
             QMainWindow {
@@ -127,6 +137,7 @@ class ExcelApp(QMainWindow):
 
         duty = self.duty_input.currentText().lower()
         searchdata = self.search_input.text()
+        save = self.save_input.currentText().lower()
 
         if duty == "search":
             result = self.datafinder(ws, searchdata)
@@ -140,7 +151,7 @@ class ExcelApp(QMainWindow):
             indices = [6, 7, 8, 9, 10, 11, 37]
             result_setade = self.calculate_sum(df, column, indices)
             self.output.setText(f"Sum: {result_setade}")
-            self.plot_graph(df, column, result_setade, "Setande")
+            self.plot_graph(df, column, result_setade)
 
         elif duty == "masrafe vasete":
             column = searchdata
@@ -148,9 +159,9 @@ class ExcelApp(QMainWindow):
             result_masrafe_vasete = self.calculate_sum(df, column, indices)
             indices = [6, 7, 8, 9, 10, 11, 37]
             result_setade = self.calculate_sum(df, column, indices)
-            percent = result_masrafe_vasete*100 / result_setade
-            self.output.setText(f"Sum: {result_masrafe_vasete},{percent}")
-            self.plot_graph(df, column, result_masrafe_vasete, "Masrafe Vasete")
+            percent = result_masrafe_vasete * 100 / result_setade
+            self.output.setText(f"Sum: {result_masrafe_vasete}, {percent}% Of Setande")
+            self.plot_graph(df, column, result_masrafe_vasete)
 
         elif duty == "arzesh afzoode tafazol":
             column = searchdata
@@ -159,9 +170,9 @@ class ExcelApp(QMainWindow):
             indices_masrafe_vasete = [14, 15, 16, 17, 19, 22, 23, 24, 25, 27, 30, 31, 32, 33, 35, 40, 56, 58]
             result_masrafe_vasete = self.calculate_sum(df, column, indices_masrafe_vasete)
             result_arfz_tafazol = result_setade - result_masrafe_vasete
-            percent = result_arfz_tafazol*100 / result_setade
-            self.output.setText(f"Sum: {result_arfz_tafazol},{percent}")
-            self.plot_graph(df, column, result_arfz_tafazol, "Arzesh Afzoode Tafazol")
+            percent = result_arfz_tafazol * 100 / result_setade
+            self.output.setText(f"Sum: {result_arfz_tafazol}, {percent}% Of Setande")
+            self.plot_graph(df, column, result_arfz_tafazol)
 
         elif duty == "arzesh afzoode jam":
             column = searchdata
@@ -172,9 +183,9 @@ class ExcelApp(QMainWindow):
             result = positive_sum - negative_sum
             indices_setade = [6, 7, 8, 9, 10, 11, 37]
             result_setade = self.calculate_sum(df, column, indices_setade)
-            percent = result*100 / result_setade
-            self.output.setText(f"Sum: {result},{percent}")
-            self.plot_graph(df, column, result, "Arzesh Afzoode Jam")
+            percent = result * 100 / result_setade
+            self.output.setText(f"Sum: {result}, {percent}% Of Setande")
+            self.plot_graph(df, column, result)
 
         elif duty == "compare(setande)":
             years = self.years_input.text().split(" ")
@@ -193,6 +204,15 @@ class ExcelApp(QMainWindow):
             plt.xlabel('Year')
             plt.ylabel('Setande')
             plt.title('Setande Compare')
+            if self.save_input == "pdf":
+                plt.savefig(f'{duty}.pdf', format="pdf")
+
+            elif self.save_input == "jpeg":
+                plt.savefig(f'{duty}.jpeg', format="jpeg")
+
+            elif self.save_input == "png":
+                plt.savefig(f'{duty}.png', format="png")
+
             plt.show()
 
         elif duty == "compare(masrafe vasete)":
@@ -212,6 +232,15 @@ class ExcelApp(QMainWindow):
             plt.xlabel('Year')
             plt.ylabel('Masrafe Vasete')
             plt.title('Masrafe Vasete Compare')
+            if self.save_input == "pdf":
+                plt.savefig(f'{duty}.pdf', format="pdf")
+
+            elif self.save_input == "jpeg":
+                plt.savefig(f'{duty}.jpeg', format="jpeg")
+
+            elif self.save_input == "png":
+                plt.savefig(f'{duty}.png', format="png")
+                
             plt.show()
 
         elif duty == "compare(arzesh afzoode)":
@@ -227,27 +256,43 @@ class ExcelApp(QMainWindow):
                     result_Masrafe_Vasete = self.calculate_sum(df, year, indices)
                     result_Arzesh_Afzoode = result_setade - result_Masrafe_Vasete
                     values.append(result_Arzesh_Afzoode)
+                    plt.savefig(f'{duty}.{self.save_input}', format=f'{self.save_input}')
                 else:
                     values.append(0)
                     QMessageBox.warning(self, "Warning", f"Column '{year}' not found in the data.")
-
             plt.bar(labels, values)
             plt.xlabel('Year')
             plt.ylabel('Arzesh Afzoode')
             plt.title('Arzesh Afzoode Compare')
+            if self.save_input == "pdf":
+                plt.savefig(f'{duty}.pdf', format="pdf")
+            elif self.save_input == "jpeg":
+                plt.savefig(f'{duty}.jpeg', format="jpeg")
+
+            elif self.save_input == "png":
+                plt.savefig(f'{duty}.png', format="png")
             plt.show()
 
-    def plot_graph(self, df, column, result, title):
+    def plot_graph(self, df, column, title):
         indices_setade = [6, 7, 8, 9, 10, 11, 37]
         result_setade = self.calculate_sum(df, column, indices_setade)
         indices_masrafe_vasete = [14, 15, 16, 17, 19, 22, 23, 24, 25, 27, 30, 31, 32, 33, 35, 40, 56, 58]
         result_masrafe_vasete = self.calculate_sum(df, column, indices_masrafe_vasete)
         sizes = [result_setade, result_masrafe_vasete, result_setade - result_masrafe_vasete]
-        labels = ['Setande', 'Masaref Vasete', 'Arzesh Afzoode']
+        labels = [f'Setande{result_setade}', f'Masaref Vasete{result_masrafe_vasete}',
+                  f'Arzesh Afzoode{result_setade - result_masrafe_vasete}']
         colors = plt.cm.viridis([i / len(sizes) for i in range(len(sizes))])
         squarify.plot(sizes=sizes, label=labels, color=colors, alpha=.7)
         plt.axis('off')
-        plt.title(title)
+        plt.title("S/MF/AF")
+        if self.save_input == "pdf":
+            plt.savefig("S/MF/AF.pdf", format="pdf")
+
+        elif self.save_input == "jpeg":
+            plt.savefig("S/MF/AF.jpeg", format="jpeg")
+
+        elif self.save_input == "png":
+            plt.savefig("S/MF/AF.png", format="png")
         plt.show()
 
 
